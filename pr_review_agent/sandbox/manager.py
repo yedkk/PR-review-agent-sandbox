@@ -57,7 +57,7 @@ class SandboxManager:
     def resume(self, sandbox_id: str) -> Sandbox:
         """Resume a previously paused sandbox."""
         logger.info("Resuming sandbox %s", sandbox_id)
-        return Sandbox.resume(sandbox_id)
+        return Sandbox.connect(sandbox_id)
 
     def pause(self, sandbox: Sandbox) -> None:
         """Pause a sandbox, preserving filesystem and memory state."""
