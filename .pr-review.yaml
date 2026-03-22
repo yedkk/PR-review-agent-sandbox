@@ -1,0 +1,3 @@
+# Repository-level configuration for PR Review Agent.
+# This file is optional. Place it in the root of any repo that uses the agent.
+language: auto

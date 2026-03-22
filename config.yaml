@@ -1,0 +1,67 @@
+agents:
+  security:
+    model: "kimi-k2.5"
+    provider: "kimi"
+  quality:
+    model: "kimi-k2.5"
+    provider: "kimi"
+  logic:
+    model: "kimi-k2.5"
+    provider: "kimi"
+  testing:
+    model: "kimi-k2.5"
+    provider: "kimi"
+  performance:
+    model: "kimi-k2.5"
+    provider: "kimi"
+  summarizer:
+    model: "kimi-k2.5"
+    provider: "kimi"
+
+languages:
+  python:
+    template: "python-reviewer"
+    lint_cmd: "ruff check . --output-format=json"
+    test_cmd: "pytest --tb=short --timeout=60 -q"
+    type_check_cmd: "mypy . --no-error-summary --output=json"
+    security_cmd: "bandit -r . -f json"
+    prompt_context: |
+      This is a Python project. Pay attention to:
+      - Type hints completeness and correctness
+      - async/await patterns and potential deadlocks
+      - Context manager usage for resources
+      - Import organization and circular dependencies
+
+  javascript:
+    template: "javascript-reviewer"
+    lint_cmd: "eslint . --format=json"
+    test_cmd: "npm test -- --ci 2>&1"
+    type_check_cmd: "tsc --noEmit 2>&1"
+    security_cmd: "npm audit --json"
+    prompt_context: |
+      This is a JavaScript/TypeScript project. Pay attention to:
+      - Type safety (if TypeScript)
+      - Promise/async error handling
+      - XSS and injection risks in DOM manipulation
+      - Bundle size impact of new dependencies
+
+  go:
+    template: "go-reviewer"
+    lint_cmd: "golangci-lint run --out-format=json"
+    test_cmd: "go test ./... -timeout 60s -json"
+    type_check_cmd: "go vet ./..."
+    security_cmd: "gosec -fmt=json ./..."
+    prompt_context: |
+      This is a Go project. Pay attention to:
+      - Error handling (no silently ignored errors)
+      - Goroutine leaks and race conditions
+      - Proper defer usage for resource cleanup
+      - Interface segregation and package boundaries
+
+  base:
+    template: "base-reviewer"
+    lint_cmd: ""
+    test_cmd: ""
+    type_check_cmd: ""
+    security_cmd: ""
+    prompt_context: "General code review."

@@ -1,0 +1,46 @@
+name: PR Review Agent
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+    inputs:
+      language:
+        description: "Override review language profile"
+        type: choice
+        options:
+          - auto
+          - python
+          - javascript
+          - go
+        default: auto
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    # Skip review on closed PRs that are not merged (only cleanup sandbox)
+    if: github.event.action != 'closed' || github.event.pull_request.merged
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Run PR Review Agent
+        run: python -m pr_review_agent
+        env:
+          E2B_API_KEY: ${{ secrets.E2B_API_KEY }}
+          KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_ACTION: ${{ github.event.action }}
+          REPO_FULL_NAME: ${{ github.repository }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          LANGUAGE_OVERRIDE: ${{ github.event.inputs.language || '' }}
