@@ -103,7 +103,7 @@ class SandboxManager:
         sandbox = self.create(repo, pr_number, template)
         clone_url = f"https://github.com/{repo}.git"
         sandbox.commands.run(
-            f"git clone {clone_url} /workspace && cd /workspace && git checkout {head_sha}",
+            f"rm -rf /workspace && git clone {clone_url} /workspace && cd /workspace && git checkout {head_sha}",
             timeout=300,
         )
         logger.info("Cloned %s at %s into new sandbox", repo, head_sha)
