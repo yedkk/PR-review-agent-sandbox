@@ -109,6 +109,9 @@ class SandboxManager:
             user="root",
         )
         sandbox.commands.run("chmod -R 777 /workspace", user="root")
+        sandbox.commands.run(
+            "git config --system --add safe.directory /workspace", user="root"
+        )
         logger.info("Cloned %s at %s into new sandbox", repo, head_sha)
         return sandbox
 
