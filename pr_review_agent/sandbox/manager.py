@@ -88,7 +88,7 @@ class SandboxManager:
             try:
                 sandbox = self.resume(sandbox_id)
                 sandbox.commands.run(
-                    f"cd /workspace && git fetch origin && git checkout {head_sha}",
+                    f"cd /workspace && git reset --hard && git clean -fd && git fetch origin && git checkout {head_sha}",
                     timeout=120,
                     user="root",
                 )
