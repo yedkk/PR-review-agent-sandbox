@@ -90,6 +90,7 @@ class SandboxManager:
                 sandbox.commands.run(
                     f"cd /workspace && git fetch origin && git checkout {head_sha}",
                     timeout=120,
+                    user="root",
                 )
                 logger.info("Resumed and synced sandbox to %s", head_sha)
                 return sandbox
@@ -105,7 +106,9 @@ class SandboxManager:
         sandbox.commands.run(
             f"rm -rf /workspace && git clone {clone_url} /workspace && cd /workspace && git checkout {head_sha}",
             timeout=300,
+            user="root",
         )
+        sandbox.commands.run("chmod -R 777 /workspace", user="root")
         logger.info("Cloned %s at %s into new sandbox", repo, head_sha)
         return sandbox
 
