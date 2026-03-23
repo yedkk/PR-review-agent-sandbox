@@ -65,11 +65,16 @@ async def main() -> None:
         review = await orchestrate_review(context, config)
         logger.info("Review complete: %d findings", len(review.findings))
 
-        gh.post_review(event.repo_full_name, event.pr_number, review)
+        gh.post_inline_review(
+            event.repo_full_name, event.pr_number, review, event.head_sha
+        )
         logger.info("Review posted to PR #%d", event.pr_number)
     finally:
-        sandbox_mgr.pause(sandbox)
-        logger.info("Sandbox paused")
+        try:
+            sandbox_mgr.pause(sandbox)
+            logger.info("Sandbox paused")
+        except Exception:
+            logger.warning("Failed to pause sandbox", exc_info=True)
 
 
 if __name__ == "__main__":

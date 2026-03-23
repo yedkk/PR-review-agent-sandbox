@@ -1,4 +1,4 @@
-# PR Review Agent
+# PR Review Agent SandBox
 
 Multi-agent PR review bot powered by E2B Sandbox. Runs as a GitHub Actions workflow — no server needed.
 

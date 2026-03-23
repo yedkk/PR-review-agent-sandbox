@@ -1,0 +1,16 @@
+# This is a config for E2B sandbox template.
+# You can use template ID (s35rtmtfk68srez3nt1y) or template name (javascript-reviewer) to create a sandbox:
+
+# Python SDK
+# from e2b import Sandbox, AsyncSandbox
+# sandbox = Sandbox.create("javascript-reviewer") # Sync sandbox
+# sandbox = await AsyncSandbox.create("javascript-reviewer") # Async sandbox
+
+# JS SDK
+# import { Sandbox } from 'e2b'
+# const sandbox = await Sandbox.create('javascript-reviewer')
+
+team_id = "1bd75b5c-9a39-44f2-b416-47dc680e9cb9"
+dockerfile = "e2b.Dockerfile"
+template_name = "javascript-reviewer"
+template_id = "s35rtmtfk68srez3nt1y"

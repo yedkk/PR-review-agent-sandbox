@@ -57,7 +57,7 @@ class SandboxManager:
     def resume(self, sandbox_id: str) -> Sandbox:
         """Resume a previously paused sandbox."""
         logger.info("Resuming sandbox %s", sandbox_id)
-        return Sandbox.resume(sandbox_id)
+        return Sandbox.connect(sandbox_id)
 
     def pause(self, sandbox: Sandbox) -> None:
         """Pause a sandbox, preserving filesystem and memory state."""
@@ -88,8 +88,9 @@ class SandboxManager:
             try:
                 sandbox = self.resume(sandbox_id)
                 sandbox.commands.run(
-                    f"cd /workspace && git fetch origin && git checkout {head_sha}",
+                    f"cd /workspace && git reset --hard && git clean -fd && git fetch origin && git checkout {head_sha}",
                     timeout=120,
+                    user="root",
                 )
                 logger.info("Resumed and synced sandbox to %s", head_sha)
                 return sandbox
@@ -103,8 +104,13 @@ class SandboxManager:
         sandbox = self.create(repo, pr_number, template)
         clone_url = f"https://github.com/{repo}.git"
         sandbox.commands.run(
-            f"git clone {clone_url} /workspace && cd /workspace && git checkout {head_sha}",
+            f"rm -rf /workspace && git clone {clone_url} /workspace && cd /workspace && git checkout {head_sha}",
             timeout=300,
+            user="root",
+        )
+        sandbox.commands.run("chmod -R 777 /workspace", user="root")
+        sandbox.commands.run(
+            "git config --system --add safe.directory /workspace", user="root"
         )
         logger.info("Cloned %s at %s into new sandbox", repo, head_sha)
         return sandbox

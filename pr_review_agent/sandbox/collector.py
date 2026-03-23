@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 
 from e2b import Sandbox
+from e2b.sandbox_sync.commands.command_handle import CommandExitException
 
 from pr_review_agent.agents.base import ReviewContext
 from pr_review_agent.config import LanguageProfile
@@ -25,10 +26,14 @@ def _run(sandbox: Sandbox, cmd: str, timeout: int = CMD_TIMEOUT) -> str:
     if not cmd:
         return ""
     logger.info("sandbox exec: %s", cmd)
-    result = sandbox.commands.run(cmd, timeout=timeout, cwd=WORKDIR)
-    output = result.stdout or ""
-    if result.stderr:
-        output += "\n" + result.stderr
+    try:
+        result = sandbox.commands.run(cmd, timeout=timeout, cwd=WORKDIR)
+        output = result.stdout or ""
+        if result.stderr:
+            output += "\n" + result.stderr
+    except CommandExitException as exc:
+        logger.info("Command exited with code %d: %s", exc.exit_code, cmd)
+        output = (exc.stdout or "") + "\n" + (exc.stderr or "")
     return output.strip()
 
 
