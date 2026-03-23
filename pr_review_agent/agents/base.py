@@ -164,6 +164,7 @@ class LLMProvider:
         response = self.openai.chat.completions.create(
             model=model,
             max_tokens=max_tokens,
+            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
@@ -178,6 +179,7 @@ class LLMProvider:
         response = client.chat.completions.create(
             model=model,
             max_tokens=max_tokens,
+            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
@@ -216,13 +218,28 @@ class BaseAgent(ABC):
 
         return self._parse_response(raw)
 
-    def _parse_response(self, raw: str) -> FacetResult:
+    @staticmethod
+    def _extract_json(text: str) -> dict | None:
+        """Try multiple strategies to extract a JSON object from LLM output."""
+        cleaned = text.strip()
+        if cleaned.startswith("```"):
+            cleaned = cleaned.split("\n", 1)[1].rsplit("```", 1)[0].strip()
         try:
-            cleaned = raw.strip()
-            if cleaned.startswith("```"):
-                cleaned = cleaned.split("\n", 1)[1].rsplit("```", 1)[0]
-            data = json.loads(cleaned)
+            return json.loads(cleaned)
         except (json.JSONDecodeError, IndexError):
+            pass
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start != -1 and end > start:
+            try:
+                return json.loads(cleaned[start : end + 1])
+            except json.JSONDecodeError:
+                pass
+        return None
+
+    def _parse_response(self, raw: str) -> FacetResult:
+        data = self._extract_json(raw)
+        if data is None:
             logger.warning("Failed to parse %s response as JSON, using raw text", self.facet_name)
             return FacetResult(facet=self.facet_name, summary=raw)
 
