@@ -1,21 +1,21 @@
 agents:
   security:
-    model: "claude-sonnet-4-20250514"
+    model: "claude-sonnet-4-6"
     provider: "claude"
   quality:
-    model: "claude-sonnet-4-20250514"
+    model: "claude-sonnet-4-6"
     provider: "claude"
   logic:
-    model: "claude-sonnet-4-20250514"
+    model: "claude-sonnet-4-6"
     provider: "claude"
   testing:
-    model: "claude-sonnet-4-20250514"
+    model: "claude-sonnet-4-6"
     provider: "claude"
   performance:
-    model: "claude-sonnet-4-20250514"
+    model: "claude-sonnet-4-6"
     provider: "claude"
   summarizer:
-    model: "claude-sonnet-4-20250514"
+    model: "claude-sonnet-4-6"
     provider: "claude"
 
 languages:
