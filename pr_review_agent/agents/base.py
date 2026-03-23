@@ -95,6 +95,10 @@ PROVIDER_REGISTRY: dict[str, dict[str, str]] = {
         "base_url": "https://api.moonshot.cn/v1",
         "api_key_env": "KIMI_API_KEY",
     },
+    "claude": {
+        "base_url": "https://code.newcli.com/claude/v1",
+        "api_key_env": "ANTHROPIC_API_KEY",
+    },
 }
 
 
@@ -190,7 +194,15 @@ class LLMProvider:
         )
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
-        response = client.chat.completions.create(**kwargs)
+        try:
+            response = client.chat.completions.create(**kwargs)
+        except Exception:
+            if json_mode:
+                logger.info("Provider %s may not support response_format, retrying without", provider)
+                kwargs.pop("response_format", None)
+                response = client.chat.completions.create(**kwargs)
+            else:
+                raise
         return response.choices[0].message.content or ""
 
 

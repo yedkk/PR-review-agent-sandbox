@@ -1,22 +1,22 @@
 agents:
   security:
-    model: "kimi-k2.5"
-    provider: "kimi"
+    model: "claude-opus-4-20250514"
+    provider: "claude"
   quality:
-    model: "kimi-k2.5"
-    provider: "kimi"
+    model: "claude-opus-4-20250514"
+    provider: "claude"
   logic:
-    model: "kimi-k2.5"
-    provider: "kimi"
+    model: "claude-opus-4-20250514"
+    provider: "claude"
   testing:
-    model: "kimi-k2.5"
-    provider: "kimi"
+    model: "claude-opus-4-20250514"
+    provider: "claude"
   performance:
-    model: "kimi-k2.5"
-    provider: "kimi"
+    model: "claude-opus-4-20250514"
+    provider: "claude"
   summarizer:
-    model: "kimi-k2.5"
-    provider: "kimi"
+    model: "claude-opus-4-20250514"
+    provider: "claude"
 
 languages:
   python:
