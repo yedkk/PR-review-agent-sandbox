@@ -96,7 +96,7 @@ PROVIDER_REGISTRY: dict[str, dict[str, str]] = {
         "api_key_env": "KIMI_API_KEY",
     },
     "claude": {
-        "base_url": "https://code.newcli.com/claude/v1",
+        "base_url": "https://code.newcli.com/codex/v1",
         "api_key_env": "ANTHROPIC_API_KEY",
     },
 }
