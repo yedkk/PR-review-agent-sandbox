@@ -1,21 +1,21 @@
 agents:
   security:
-    model: "gpt-5.3-codex"
+    model: "gpt-5-codex"
     provider: "codex"
   quality:
-    model: "gpt-5.3-codex"
+    model: "gpt-5-codex"
     provider: "codex"
   logic:
-    model: "gpt-5.3-codex"
+    model: "gpt-5-codex"
     provider: "codex"
   testing:
-    model: "gpt-5.3-codex"
+    model: "gpt-5-codex"
     provider: "codex"
   performance:
-    model: "gpt-5.3-codex"
+    model: "gpt-5-codex"
     provider: "codex"
   summarizer:
-    model: "gpt-5.3-codex"
+    model: "gpt-5-codex"
     provider: "codex"
 
 languages:
