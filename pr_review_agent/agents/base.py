@@ -194,6 +194,34 @@ class LLMProvider:
         response = self.openai.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
+    @staticmethod
+    def _parse_sse_response(text: str) -> str:
+        """Extract content from SSE streaming response or plain JSON."""
+        text = text.strip()
+        if not text.startswith("data:"):
+            data = json.loads(text)
+            return data["choices"][0]["message"]["content"] or ""
+        content_parts: list[str] = []
+        for line in text.split("\n"):
+            line = line.strip()
+            if not line.startswith("data:"):
+                continue
+            payload = line[5:].strip()
+            if payload == "[DONE]":
+                break
+            try:
+                chunk = json.loads(payload)
+                delta = chunk.get("choices", [{}])[0].get("delta", {})
+                text_part = delta.get("content")
+                if not text_part:
+                    output = chunk.get("choices", [{}])[0].get("message", {})
+                    text_part = output.get("content")
+                if text_part:
+                    content_parts.append(text_part)
+            except (json.JSONDecodeError, IndexError, KeyError):
+                continue
+        return "".join(content_parts)
+
     def _call_openai_compat(
         self, provider: str, model: str, system: str, user: str, max_tokens: int,
         json_mode: bool,
@@ -209,8 +237,6 @@ class LLMProvider:
                 {"role": "user", "content": user},
             ],
         }
-        if json_mode:
-            payload["response_format"] = {"type": "json_object"}
         resp = httpx.post(
             f"{cfg['base_url']}/chat/completions",
             headers={
@@ -221,8 +247,7 @@ class LLMProvider:
             timeout=600,
         )
         resp.raise_for_status()
-        data = resp.json()
-        return data["choices"][0]["message"]["content"] or ""
+        return self._parse_sse_response(resp.text)
 
 
 # Singleton shared across all agents
