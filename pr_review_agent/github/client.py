@@ -72,18 +72,23 @@ class GitHubClient:
         body = format_review_body(review)
 
         if comments:
-            pr.create_review(
-                commit=repo.get_commit(head_sha),
-                body=body,
-                event="COMMENT",
-                comments=comments,
-            )
-        else:
-            pr.create_issue_comment(body)
+            try:
+                pr.create_review(
+                    commit=repo.get_commit(head_sha),
+                    body=body,
+                    event="COMMENT",
+                    comments=comments,
+                )
+                logger.info(
+                    "Posted review on %s#%d (%d inline comments)",
+                    repo_full_name, pr_number, len(comments),
+                )
+                return
+            except Exception:
+                logger.warning(
+                    "Inline review failed, falling back to issue comment",
+                    exc_info=True,
+                )
 
-        logger.info(
-            "Posted review on %s#%d (%d inline comments)",
-            repo_full_name,
-            pr_number,
-            len(comments),
-        )
+        pr.create_issue_comment(body)
+        logger.info("Posted review comment on %s#%d", repo_full_name, pr_number)
