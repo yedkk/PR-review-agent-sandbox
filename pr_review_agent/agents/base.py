@@ -135,14 +135,15 @@ class LLMProvider:
         system: str,
         user: str,
         max_tokens: int = 4096,
+        json_mode: bool = False,
     ) -> str:
         if config.provider == "anthropic":
             return self._call_anthropic(config.model, system, user, max_tokens)
         elif config.provider == "openai":
-            return self._call_openai(config.model, system, user, max_tokens)
+            return self._call_openai(config.model, system, user, max_tokens, json_mode)
         elif config.provider in PROVIDER_REGISTRY:
             return self._call_openai_compat(
-                config.provider, config.model, system, user, max_tokens
+                config.provider, config.model, system, user, max_tokens, json_mode
             )
         else:
             raise ValueError(f"Unknown provider: {config.provider}")
@@ -159,32 +160,37 @@ class LLMProvider:
         return response.content[0].text
 
     def _call_openai(
-        self, model: str, system: str, user: str, max_tokens: int
+        self, model: str, system: str, user: str, max_tokens: int, json_mode: bool
     ) -> str:
-        response = self.openai.chat.completions.create(
+        kwargs: dict[str, Any] = dict(
             model=model,
             max_tokens=max_tokens,
-            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
         )
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        response = self.openai.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
     def _call_openai_compat(
-        self, provider: str, model: str, system: str, user: str, max_tokens: int
+        self, provider: str, model: str, system: str, user: str, max_tokens: int,
+        json_mode: bool,
     ) -> str:
         client = self._get_compat_client(provider)
-        response = client.chat.completions.create(
+        kwargs: dict[str, Any] = dict(
             model=model,
             max_tokens=max_tokens,
-            response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
         )
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        response = client.chat.completions.create(**kwargs)
         return response.choices[0].message.content or ""
 
 
@@ -214,7 +220,7 @@ class BaseAgent(ABC):
         user = self.user_prompt(context)
 
         logger.info("Running %s agent (model=%s)", self.facet_name, self.model_config.model)
-        raw = await self.llm.chat(self.model_config, system, user)
+        raw = await self.llm.chat(self.model_config, system, user, json_mode=True)
 
         return self._parse_response(raw)
 
@@ -243,16 +249,20 @@ class BaseAgent(ABC):
             logger.warning("Failed to parse %s response as JSON, using raw text", self.facet_name)
             return FacetResult(facet=self.facet_name, summary=raw)
 
-        findings = [
-            Finding(
+        findings = []
+        for f in data.get("findings", []):
+            raw_line = f.get("line")
+            try:
+                line = int(raw_line) if raw_line is not None else None
+            except (ValueError, TypeError):
+                line = None
+            findings.append(Finding(
                 severity=f.get("severity", "info"),
                 file=f.get("file", ""),
-                line=f.get("line"),
+                line=line,
                 message=f.get("message", ""),
                 suggestion=f.get("suggestion", ""),
-            )
-            for f in data.get("findings", [])
-        ]
+            ))
         return FacetResult(
             facet=self.facet_name,
             findings=findings,
