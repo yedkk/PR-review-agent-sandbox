@@ -1,22 +1,22 @@
 agents:
   security:
-    model: "gpt-5-codex"
-    provider: "codex"
+    model: "kimi-k2.5"
+    provider: "kimi"
   quality:
-    model: "gpt-5-codex"
-    provider: "codex"
+    model: "kimi-k2.5"
+    provider: "kimi"
   logic:
-    model: "gpt-5-codex"
-    provider: "codex"
+    model: "kimi-k2.5"
+    provider: "kimi"
   testing:
-    model: "gpt-5-codex"
-    provider: "codex"
+    model: "kimi-k2.5"
+    provider: "kimi"
   performance:
-    model: "gpt-5-codex"
-    provider: "codex"
+    model: "kimi-k2.5"
+    provider: "kimi"
   summarizer:
-    model: "gpt-5-codex"
-    provider: "codex"
+    model: "kimi-k2.5"
+    provider: "kimi"
 
 languages:
   python:
