@@ -95,13 +95,17 @@ PROVIDER_REGISTRY: dict[str, dict[str, str]] = {
         "base_url": "https://api.moonshot.cn/v1",
         "api_key_env": "KIMI_API_KEY",
     },
-    "claude": {
-        "base_url": "https://code.newcli.com/claude",
-        "api_key_env": "ANTHROPIC_API_KEY",
-    },
     "codex": {
         "base_url": "https://code.newcli.com/codex/v1",
         "api_key_env": "OPENAI_API_KEY",
+    },
+}
+
+ANTHROPIC_PROVIDERS: dict[str, dict[str, str]] = {
+    "anthropic": {},
+    "claude": {
+        "base_url": "https://code.newcli.com/claude",
+        "api_key_env": "ANTHROPIC_API_KEY",
     },
 }
 
@@ -110,15 +114,20 @@ class LLMProvider:
     """Unified interface for Anthropic, OpenAI, and OpenAI-compatible APIs."""
 
     def __init__(self) -> None:
-        self._anthropic_client: anthropic.Anthropic | None = None
+        self._anthropic_clients: dict[str, anthropic.Anthropic] = {}
         self._openai_client: openai.OpenAI | None = None
         self._compat_clients: dict[str, openai.OpenAI] = {}
 
-    @property
-    def anthropic(self) -> anthropic.Anthropic:
-        if self._anthropic_client is None:
-            self._anthropic_client = anthropic.Anthropic()
-        return self._anthropic_client
+    def _get_anthropic_client(self, provider: str) -> anthropic.Anthropic:
+        if provider not in self._anthropic_clients:
+            cfg = ANTHROPIC_PROVIDERS.get(provider, {})
+            kwargs: dict[str, Any] = {}
+            if "base_url" in cfg:
+                kwargs["base_url"] = cfg["base_url"]
+            if "api_key_env" in cfg:
+                kwargs["api_key"] = os.environ.get(cfg["api_key_env"], "")
+            self._anthropic_clients[provider] = anthropic.Anthropic(**kwargs)
+        return self._anthropic_clients[provider]
 
     @property
     def openai(self) -> openai.OpenAI:
@@ -145,8 +154,8 @@ class LLMProvider:
         max_tokens: int = 4096,
         json_mode: bool = False,
     ) -> str:
-        if config.provider == "anthropic":
-            return self._call_anthropic(config.model, system, user, max_tokens)
+        if config.provider in ANTHROPIC_PROVIDERS:
+            return self._call_anthropic(config.provider, config.model, system, user, max_tokens)
         elif config.provider == "openai":
             return self._call_openai(config.model, system, user, max_tokens, json_mode)
         elif config.provider in PROVIDER_REGISTRY:
@@ -157,9 +166,10 @@ class LLMProvider:
             raise ValueError(f"Unknown provider: {config.provider}")
 
     def _call_anthropic(
-        self, model: str, system: str, user: str, max_tokens: int
+        self, provider: str, model: str, system: str, user: str, max_tokens: int
     ) -> str:
-        response = self.anthropic.messages.create(
+        client = self._get_anthropic_client(provider)
+        response = client.messages.create(
             model=model,
             max_tokens=max_tokens,
             system=system,
