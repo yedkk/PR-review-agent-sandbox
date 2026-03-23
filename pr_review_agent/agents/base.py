@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 import anthropic
+import httpx
 import openai
 
 from pr_review_agent.config import AgentModelConfig
@@ -197,27 +198,31 @@ class LLMProvider:
         self, provider: str, model: str, system: str, user: str, max_tokens: int,
         json_mode: bool,
     ) -> str:
-        client = self._get_compat_client(provider)
-        kwargs: dict[str, Any] = dict(
-            model=model,
-            max_tokens=max_tokens,
-            messages=[
+        cfg = PROVIDER_REGISTRY[provider]
+        api_key = os.environ.get(cfg["api_key_env"], "")
+        payload: dict[str, Any] = {
+            "model": model,
+            "max_tokens": max_tokens,
+            "stream": False,
+            "messages": [
                 {"role": "system", "content": system},
                 {"role": "user", "content": user},
             ],
-        )
+        }
         if json_mode:
-            kwargs["response_format"] = {"type": "json_object"}
-        try:
-            response = client.chat.completions.create(**kwargs)
-        except Exception:
-            if json_mode:
-                logger.info("Provider %s may not support response_format, retrying without", provider)
-                kwargs.pop("response_format", None)
-                response = client.chat.completions.create(**kwargs)
-            else:
-                raise
-        return response.choices[0].message.content or ""
+            payload["response_format"] = {"type": "json_object"}
+        resp = httpx.post(
+            f"{cfg['base_url']}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=600,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return data["choices"][0]["message"]["content"] or ""
 
 
 # Singleton shared across all agents
